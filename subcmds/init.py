@@ -103,6 +103,10 @@ to update the working directory files.
                  dest='archive', action='store_true',
                  help='checkout an archive instead of a git repository for '
                       'each project. See git archive.')
+    g.add_option('--clean',
+                 dest='clean', action='store_true',
+                 help='remove copyfiles when switching branches '
+                      'with -b/--manifest-branch')
     g.add_option('-g', '--groups',
                  dest='groups', default='default',
                  help='restrict manifest projects to ones with specified '
@@ -233,6 +237,8 @@ to update the working directory files.
       sys.exit(1)
 
     if opt.manifest_branch:
+      if opt.clean:
+        m.Clean()
       m.MetaBranchSwitch(opt.manifest_branch)
 
     syncbuf = SyncBuffer(m.config)

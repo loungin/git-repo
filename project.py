@@ -879,6 +879,13 @@ class Project(object):
       if R_HEADS + n not in heads:
         self.bare_git.DeleteRef(name, ref_id)
 
+  def RemoveCopyfiles(self):
+    """ Remove copyfile's destinations
+    """
+    for cf in self.copyfiles:
+      if os.path.exists(cf.abs_dest):
+        os.remove(cf.abs_dest)
+
   def GetUploadableBranches(self, selected_branch=None):
     """List any branches which can be uploaded for review.
     """
@@ -2580,6 +2587,12 @@ class MetaProject(Project):
                      revisionExpr = 'refs/heads/master',
                      revisionId = None,
                      groups = None)
+
+  def Clean(self):
+    """ Remove files made by project's <copyfiles> elements
+    """
+    for project in self.manifest.projects:
+      project.RemoveCopyfiles()
 
   def PreSync(self):
     if self.Exists:
