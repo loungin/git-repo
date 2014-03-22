@@ -809,10 +809,11 @@ class XmlManifest(object):
   def _ParseCopyFile(self, project, node):
     src = self._reqatt(node, 'src')
     dest = self._reqatt(node, 'dest')
+    symlink = self._optatt(node, 'symlink') == 'true'
     if not self.IsMirror:
       # src is project relative;
       # dest is relative to the top of the tree
-      project.AddCopyFile(src, dest, os.path.join(self.topdir, dest))
+      project.AddCopyFile(src, dest, os.path.join(self.topdir, dest), symlink)
 
   def _ParseAnnotation(self, project, node):
     name = self._reqatt(node, 'name')
@@ -836,6 +837,17 @@ class XmlManifest(object):
       raise ManifestParseError("remote %s not defined in %s" %
             (name, self.manifestFile))
     return v
+
+  def _optatt(self, node, attname, default=None):
+    """ reads an optional attribute from the node.
+
+        If attribute is not present, return default. If default
+        is not given, defaults to None.
+    """
+    try:
+      return self._reqatt(node, attname)
+    except (ManifestParseError), err:
+      return default
 
   def _reqatt(self, node, attname):
     """

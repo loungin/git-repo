@@ -204,11 +204,12 @@ class _Annotation:
     self.keep = keep
 
 class _CopyFile:
-  def __init__(self, src, dest, abssrc, absdest):
+  def __init__(self, src, dest, abssrc, absdest, symlink=False):
     self.src = src
     self.dest = dest
     self.abs_src = abssrc
     self.abs_dest = absdest
+    self.symlink = symlink
 
   def _Copy(self):
     src = self.abs_src
@@ -223,11 +224,14 @@ class _CopyFile:
           dest_dir = os.path.dirname(dest)
           if not os.path.isdir(dest_dir):
             os.makedirs(dest_dir)
-        shutil.copy(src, dest)
-        # make the file read-only
-        mode = os.stat(dest)[stat.ST_MODE]
-        mode = mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
-        os.chmod(dest, mode)
+        if self.symlink and os.name == 'posix':
+          os.symlink(src, dest)
+        else:
+          shutil.copy(src, dest)
+          # make the file read-only
+          mode = os.stat(dest)[stat.ST_MODE]
+          mode = mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH)
+          os.chmod(dest, mode)
       except IOError:
         _error('Cannot copy file %s to %s', src, dest)
 
@@ -1302,11 +1306,11 @@ class Project(object):
     else:
       syncbuf.later1(self, _doff)
 
-  def AddCopyFile(self, src, dest, absdest):
+  def AddCopyFile(self, src, dest, absdest, symlink=False):
     # dest should already be an absolute path, but src is project relative
     # make src an absolute path
     abssrc = os.path.join(self.worktree, src)
-    self.copyfiles.append(_CopyFile(src, dest, abssrc, absdest))
+    self.copyfiles.append(_CopyFile(src, dest, abssrc, absdest, symlink))
 
   def AddAnnotation(self, name, value, keep):
     self.annotations.append(_Annotation(name, value, keep))
